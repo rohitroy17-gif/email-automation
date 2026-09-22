@@ -1,0 +1,870 @@
+{
+  "name": "email_automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1360,
+        224
+      ],
+      "id": "681b4d88-4965-417f-90fe-ec2724d8fd96",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.snippet }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "High Priority",
+              "description": "Emails that require immediate or urgent attention because they contain time-sensitive requests, important decisions, deadlines, emergencies, or messages from important people."
+            },
+            {
+              "category": "Finance/Billing",
+              "description": "Emails related to money, payments, banking, invoices, financial transactions, purchases, subscriptions, billing, refunds, or financial documents."
+            },
+            {
+              "category": "Customer Support",
+              "description": "Emails from customers or users who need help, report a problem, ask a question, request a refund, complain about a service, or need assistance with a product."
+            },
+            {
+              "category": "Promotion",
+              "description": "Emails that are primarily marketing, advertising, offers, newsletters, discounts, product promotions, or sales campaigns and usually don't require immediate action."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -1152,
+        192
+      ],
+      "id": "a318ce5d-dab0-4251-8922-3aff35d61e38",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -752,
+        448
+      ],
+      "id": "2b1073f0-4741-48aa-a800-20c5ebf9089a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "azyVhs6XrBpkL9Oa",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_395797742860455631"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -816,
+        0
+      ],
+      "id": "36907170-26ec-4127-8067-0887bc37c3f8",
+      "name": "finance label",
+      "webhookId": "5f00e22e-e847-4c3e-a127-778c03fdec2c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_5865746461523590460"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -896,
+        -224
+      ],
+      "id": "41e35275-21fe-4fe6-b50e-478bf5337e17",
+      "name": "high priority label",
+      "webhookId": "055b3859-4c77-46c5-8da8-1638c8f8ea2f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_4499402876932442833"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -832,
+        592
+      ],
+      "id": "cc0eb950-bab4-441e-a640-e2ddbf77bcc7",
+      "name": "promotion label",
+      "webhookId": "2bdf47fe-52e9-40a4-b173-c24ee06b8ded",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_7546427110832253196"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -816,
+        256
+      ],
+      "id": "d4dccfa2-b1ec-4990-8038-2acd682844d7",
+      "name": "customer support label",
+      "webhookId": "890f3c54-ba74-479b-9859-eff52ee9cfc8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Text Classifier').item.json.snippet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a Gmail Drafting Assistant responsible for handling high-priority emails.\n\nYour task is to identify emails that require a professional response but are NOT urgent or time-critical.\n\nFor medium-priority emails:\n- Understand the sender's request and intent.\n- Identify what response or action is required.\n- Draft a clear, professional, polite, and concise reply.\n- Address all important questions or requests from the sender.\n- Do not invent information that is not present in the email.\n- Do not make commitments, promises, or decisions on behalf of the user unless explicitly stated in the email or provided instructions.\n- Maintain a professional and helpful tone.\n- If additional information is required from the user before responding, clearly mention what information is needed.\n- Do not send the email. Only create a draft.\n\nMedium-priority examples include:\n- Routine client questions.\n- Normal project updates that require a response.\n- Meeting or schedule confirmations without urgency.\n- Requests for information.\n- General business communication.\n- Non-urgent customer inquiries.\n\nDo NOT treat an email as medium priority if it is clearly urgent, critical, or requires immediate action.\n\nOutput only the email reply draft. Do not include explanations, analysis, labels, or metadata."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -544,
+        -480
+      ],
+      "id": "bc55f9f8-4eff-4751-98e9-13b3412e3267",
+      "name": "create draft"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        -352
+      ],
+      "id": "52de644c-e816-4965-83e3-fd103abfa613",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Fx8sWravaaHwsabO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"subject\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n        \"body\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t\t\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -384,
+        -336
+      ],
+      "id": "818f42ca-03c2-4f5c-81b8-ba9cfcf5ef54",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -144,
+        -432
+      ],
+      "id": "b8fdfb24-8e74-4422-b95b-8bbac3240849",
+      "name": "Create a draft",
+      "webhookId": "4b1611a1-cb3d-4fe8-81c0-2bd32f4e40d0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1267411996464445",
+        "recipientPhoneNumber": "8801718350521",
+        "textBody": "=you have got high priority mail from - {{ $('Text Classifier').item.json.From }}\n##Subject\n{{ $('Text Classifier').item.json.Subject }}\n\n##Actual Mail\n{{ $('Gmail Trigger').item.json.snippet }}\n\n##Draft Mail\n{{ $('create draft').item.json.output.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        -432
+      ],
+      "id": "ae629354-b9b5-40c5-8780-d58357d970c4",
+      "name": "Send message",
+      "webhookId": "c96a4553-4583-4844-93e7-73c1c28a0e4d",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "2ZntUqtd6iSJ6Bgt",
+          "name": "WhatsApp account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        -48
+      ],
+      "id": "48340140-8829-4c44-9dc7-e1d3e71e7e08",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Fx8sWravaaHwsabO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.snippet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Gmail Finance Email Summarization Assistant.\n\nYour task is to summarize emails related to financial activities such as payments, invoices, receipts, transactions, banking, refunds, subscriptions, bills, salaries, and financial statements.\n\nFor each email:\n- Identify the main financial purpose of the email.\n- Extract important details such as sender/company, transaction type, amount, currency, date, invoice number, payment status, and due date when available.\n- Clearly mention whether the payment or transaction is successful, pending, failed, refunded, or overdue when stated.\n- Highlight any required action or upcoming deadline.\n- Do not invent or assume financial information that is not present in the email.\n- Keep the summary concise, clear, and easy to understand.\n- Do not provide financial advice.\n- If important information is missing, do not guess it.\n\nUse this format:\n\nFinancial Summary:\n- Type:\n- Amount:\n- Date:\n- Status:\n- Important Details:\n- Action Required:\n\nOnly include fields that are relevant or available in the email."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -512,
+        -160
+      ],
+      "id": "e8e9409a-36af-4bc7-a21d-3601cc67f786",
+      "name": "summarize"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"subject\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n        \"body\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t\t\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        -48
+      ],
+      "id": "16a24a82-16fb-4f1c-bdf4-a56d686eb670",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "sendTo": "roy172758@gmail.com",
+        "subject": "={{ $json.output.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        -80
+      ],
+      "id": "af960311-3bc4-4300-b2e6-4122a1446c5f",
+      "name": "Send a message",
+      "webhookId": "a00588e3-acab-4fb8-9897-b7d04a454abb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1267411996464445",
+        "recipientPhoneNumber": "8801718350521",
+        "textBody": "=you have got finance related mail from - {{ $('Gmail Trigger').item.json.From }}\n\n  we have send the below summary of mail to Finance team\n{{ $('summarize').item.json.output.body }}\n\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        -96
+      ],
+      "id": "f0170e56-5ea1-4e62-b5b7-21b19b6e69c0",
+      "name": "Send message1",
+      "webhookId": "c96a4553-4583-4844-93e7-73c1c28a0e4d",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "2ZntUqtd6iSJ6Bgt",
+          "name": "WhatsApp account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.snippet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Gmail Customer Support Drafting Assistant.\n\nYour task is to analyze customer support emails and create a professional, helpful, and polite reply draft.\n\nWhen processing an email:\n- Understand the customer's main problem, question, or request.\n- Identify the relevant issue or service being discussed.\n- Acknowledge the customer's concern.\n- Provide a clear response based only on the information available in the email or provided instructions.\n- If a solution is clear, explain the next steps concisely.\n- If more information is required, politely ask the customer for the necessary details.\n- If the issue cannot be resolved from the available information, do not invent a solution. State that the issue requires further investigation.\n- Maintain a professional, empathetic, and customer-friendly tone.\n- Do not blame the customer or make unsupported claims.\n- Do not promise refunds, compensation, deadlines, or other actions unless explicitly authorized.\n- Do not send the email. Only create a draft.\n\nThe response should:\n1. Greet the customer appropriately.\n2. Acknowledge their issue.\n3. Provide the solution or next step.\n4. Ask for additional information if necessary.\n5. End with a professional closing.\n\nReturn only the email reply draft. Do not include analysis, classification, labels, or explanations."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -496,
+        128
+      ],
+      "id": "d1a30f2b-bb17-46d9-94a3-349fbc04f2d1",
+      "name": "customer support"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -576,
+        240
+      ],
+      "id": "4defaa0b-1b24-4cca-831f-225ed4f6154e",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Fx8sWravaaHwsabO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"subject\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n        \"body\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t\t\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        256
+      ],
+      "id": "ef61e8ca-a030-42a0-a59a-d0c15d75c134",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "sendTo": "roy172758@gmail.com",
+        "subject": "={{ $json.output.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        224
+      ],
+      "id": "debbf491-8f78-4ef0-9027-dce59b9d541b",
+      "name": "Send a message1",
+      "webhookId": "3961da11-566c-4b87-9e7d-9717bc2fe277",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1267411996464445",
+        "recipientPhoneNumber": "8801718350521",
+        "textBody": "=you have got cUSTOMER SUPPORT mail from - {{ $('Gmail Trigger').item.json.From }}\n\n  we have auto replied below mail back:\n{{ $('customer support').item.json.output.body }}\n\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        224
+      ],
+      "id": "1abbcbfa-2921-4ac4-b8ae-2a611b6ef2bb",
+      "name": "Send message2",
+      "webhookId": "c96a4553-4583-4844-93e7-73c1c28a0e4d",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "2ZntUqtd6iSJ6Bgt",
+          "name": "WhatsApp account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.snippet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Gmail Promotion Email Assistant.\n\nYour task is to analyze promotional, marketing, advertising, newsletter, discount, and sales-related emails and create a concise summary or appropriate draft response when needed.\n\nWhen processing a promotional email:\n- Identify the company, product, or service being promoted.\n- Identify the main offer, discount, deal, or announcement.\n- Extract important details such as price, discount percentage, coupon code, validity period, and expiration date when available.\n- Clearly mention any important terms or conditions stated in the email.\n- Do not invent or assume promotional information that is not present.\n- Keep the output concise and easy to understand.\n- Do not provide purchasing or financial advice.\n- Do not claim that an offer is genuine, safe, or beneficial unless this is explicitly supported by the email.\n- If no response is required, provide a short summary instead of drafting a reply.\n- Do not send emails. Only create a draft or summary.\n\nUse this format when summarizing:\n\nPromotion Summary:\n- Company:\n- Product/Service:\n- Offer:\n- Discount/Price:\n- Coupon Code:\n- Valid Until:\n- Important Details:\n- Action Required:\n\nOnly include information that is available and relevant.\n\nReturn only the summary or email draft. Do not include analysis, classification, labels, or explanations."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -496,
+        512
+      ],
+      "id": "81330eec-53ca-48e6-9663-90db540eaa6e",
+      "name": "promotion"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        624
+      ],
+      "id": "6aa11e78-b9fa-406f-bf1e-25f756e1d9df",
+      "name": "Google Gemini Chat Model4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Fx8sWravaaHwsabO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"subject\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n        \"body\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t\t\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -368,
+        624
+      ],
+      "id": "cb805718-b8b7-45ab-ab98-5a720afe6063",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "sendTo": "roy172758@gmail.com",
+        "subject": "={{ $json.output.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -112,
+        528
+      ],
+      "id": "95298d13-66d3-4bf8-8222-4aedfcd7fa84",
+      "name": "Send a message2",
+      "webhookId": "b556e999-269c-49aa-8c5d-949668567ff3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0y3m1paLoD4jrToH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1267411996464445",
+        "recipientPhoneNumber": "8801718350521",
+        "textBody": "=you have got promotion mail from - {{ $('Gmail Trigger').item.json.From }}\n\n  we have auto replied below mail back:\n{{ $('promotion').item.json.output.body }}\n\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        528
+      ],
+      "id": "60abdc87-9ad5-4308-9848-b9f1c8a1530f",
+      "name": "Send message3",
+      "webhookId": "c96a4553-4583-4844-93e7-73c1c28a0e4d",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "2ZntUqtd6iSJ6Bgt",
+          "name": "WhatsApp account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "high priority label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "finance label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "customer support label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "promotion label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "high priority label": {
+      "main": [
+        [
+          {
+            "node": "create draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "create draft",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "create draft",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create draft": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a draft": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "finance label": {
+      "main": [
+        [
+          {
+            "node": "summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "summarize",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "summarize": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "summarize",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "customer support label": {
+      "main": [
+        [
+          {
+            "node": "customer support",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "customer support",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "customer support",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "customer support": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Send message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "promotion label": {
+      "main": [
+        [
+          {
+            "node": "promotion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "promotion",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "promotion",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "promotion": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Send message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "235e6a2c-6ef5-4335-b710-c0a4d784994c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f80bf9885fdddb71737263f0c1cd5d7aff683ad5d2d66aa5edf88e4957f519e7"
+  },
+  "nodeGroups": [],
+  "id": "DvttexW8KDPDmZ7O",
+  "tags": []
+}
